@@ -33,7 +33,8 @@ def test_validate_name_invalid(value):
     with pytest.raises(ValueError):
         validate_name(value)
 
-
+def test_validate_name_trim():
+    assert validate_name("  Juan Perez  ") == "Juan Perez"
 @pytest.mark.parametrize(
     "value",
     ["test@example.com", "user.name@dominio.co"],
@@ -61,6 +62,11 @@ def test_validate_email_length_limits():
     with pytest.raises(ValueError):
         validate_email(too_long)
 
+def test_validate_email_trim_spaces():
+    assert (
+        validate_email("  TEST@EXAMPLE.COM  ")
+        == "test@example.com"
+    )
 
 @pytest.mark.parametrize(
     "value,expected",
@@ -69,6 +75,12 @@ def test_validate_email_length_limits():
 def test_validate_age_valid(value, expected):
     assert validate_age(value) == expected
 
+@pytest.mark.parametrize(
+    "value",
+    ["18", "100"],
+)
+def test_validate_age_edges(value):
+    assert validate_age(value)
 
 @pytest.mark.parametrize(
     "value",
@@ -95,6 +107,13 @@ def test_validate_phone_invalid(value):
     with pytest.raises(ValueError):
         validate_phone(value)
 
+@pytest.mark.parametrize(
+    "value",
+    ["123abc456", "999 999 999", "+51999999999"],
+)
+def test_validate_phone_mixed_invalid(value):
+    with pytest.raises(ValueError):
+        validate_phone(value)
 
 def test_validate_password_valid():
     assert validate_password("Test123!") == "Test123!"
@@ -108,6 +127,9 @@ def test_validate_password_invalid(value):
     with pytest.raises(ValueError):
         validate_password(value)
 
+def test_validate_password_long():
+    password = "Aa1!" + "x" * 100
+    assert validate_password(password)
 
 def test_validate_confirm_password():
     validate_confirm_password("Test123!", "Test123!")
@@ -163,7 +185,18 @@ def test_validate_time_blocks(value, is_valid):
         with pytest.raises(ValueError):
             validate_time(value, start, end, 30)
 
-
+@pytest.mark.parametrize(
+    "value",
+    ["9am", "25:00", "09-00", ""],
+)
+def test_validate_time_invalid_format(value):
+    with pytest.raises(ValueError):
+        validate_time(
+            value,
+            time(9, 0),
+            time(17, 0),
+            30,
+        )
 def test_validate_availability():
     validate_availability(False)
     with pytest.raises(ValueError):
@@ -177,3 +210,11 @@ def test_validate_cancellation_limits():
         validate_cancellation(now + timedelta(hours=1, minutes=59), now)
     with pytest.raises(ValueError):
         validate_cancellation(now - timedelta(minutes=1), now)
+
+@pytest.mark.parametrize(
+    "value",
+    ["2026/05/20", "20-05-2026", "abc", ""],
+)
+def test_validate_date_invalid_format(value):
+    with pytest.raises(ValueError):
+        validate_date(value)

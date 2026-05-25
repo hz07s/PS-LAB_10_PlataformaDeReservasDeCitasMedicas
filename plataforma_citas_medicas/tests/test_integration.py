@@ -28,6 +28,11 @@ def login_client(client, email="test@example.com", password="Test123!"):
         follow_redirects=True,
     )
 
+def test_dashboard_requires_login(client):
+    response = client.get("/dashboard", follow_redirects=True)
+
+    assert b"Debe iniciar sesi" in response.data
+
 
 def get_next_weekday():
     target = date.today() + timedelta(days=1)
@@ -43,6 +48,18 @@ def test_register_and_login_success(client):
     response = login_client(client)
     assert b"Inicio de sesi" in response.data
 
+def test_reserve_requires_login(client):
+    response = client.post(
+        "/reserve",
+        data={
+            "medico_id": "1",
+            "fecha": "2026-06-01",
+            "hora": "09:00",
+        },
+        follow_redirects=True,
+    )
+
+    assert b"Debe iniciar sesi" in response.data
 
 def test_duplicate_email_registration(client):
     register_client(client)
@@ -127,3 +144,166 @@ def test_api_availability(client):
     data = response.get_json()
     assert "slots" in data
     assert any(slot["status"] == "Libre" for slot in data["slots"])
+
+def test_api_requires_login(client):
+    response = client.get(
+        "/api/availability?medico_id=1&fecha=2026-06-01"
+    )
+    assert response.status_code in (302, 401)
+
+def test_reserve_invalid_doctor(client):
+    register_client(client)
+    login_client(client)
+
+    fecha = get_next_weekday().strftime("%Y-%m-%d")
+
+    response = client.post(
+        "/reserve",
+        data={
+            "medico_id": "999",
+            "fecha": fecha,
+            "hora": "09:00",
+        },
+        follow_redirects=True,
+    )
+
+    assert b"medico" in response.data.lower()
+
+def test_reserve_past_date(client):
+    register_client(client)
+    login_client(client)
+
+    with client.application.app_context():
+        doctor = Medico.query.first()
+
+    yesterday = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+    response = client.post(
+            "/reserve",
+        data={
+            "medico_id": str(doctor.id),
+            "fecha": yesterday,
+            "hora": "09:00",
+        },
+        follow_redirects=True,
+    )
+
+    assert b"fecha" in response.data.lower()
+
+def test_reserve_invalid_time(client):
+    register_client(client)
+    login_client(client)
+
+    with client.application.app_context():
+        doctor = Medico.query.first()
+
+    fecha = get_next_weekday().strftime("%Y-%m-%d")
+
+    response = client.post(
+        "/reserve",
+        data={
+            "medico_id": str(doctor.id),
+            "fecha": fecha,
+            "hora": "09:01",
+        },
+        follow_redirects=True,
+    )
+
+    assert b"hora" in response.data.lower()
+
+def test_user_cannot_cancel_other_user_appointment(client):
+    register_client(client, "user1@test.com")
+    login_client(client, "user1@test.com")
+
+    with client.application.app_context():
+        patient = User.query.filter_by(email="user1@test.com").first()
+        doctor = Medico.query.first()
+
+        cita = Cita(
+            usuario_id=patient.id,
+            medico_id=doctor.id,
+            fecha=get_next_weekday(),
+            hora=datetime.strptime("09:00", "%H:%M").time(),
+            estado="programada",
+        )
+
+        db.session.add(cita)
+        db.session.commit()
+        cita_id = cita.id
+
+    client.get("/logout")
+
+    register_client(client, "user2@test.com")
+    login_client(client, "user2@test.com")
+
+    response = client.post(
+        f"/cancel/{cita_id}",
+        follow_redirects=True,
+    )
+
+    assert b"no existe" in response.data.lower()
+
+def test_cannot_cancel_twice(client):
+    register_client(client)
+    login_client(client)
+
+    with client.application.app_context():
+        patient = User.query.filter_by(email="test@example.com").first()
+        doctor = Medico.query.first()
+
+        cita = Cita(                
+            usuario_id=patient.id,
+            medico_id=doctor.id,
+            fecha=get_next_weekday(),
+            hora=datetime.strptime("09:00", "%H:%M").time(),
+            estado="programada",
+        )
+
+        db.session.add(cita)
+        db.session.commit()
+        cita_id = cita.id
+
+    response = client.post(
+        f"/cancel/{cita_id}",
+        follow_redirects=True,
+    )
+
+    assert b"cancelada correctamente" in response.data
+
+    response = client.post(
+        f"/cancel/{cita_id}",
+        follow_redirects=True,
+    )
+
+    assert b"ya fue cancelada" in response.data.lower()
+
+def test_same_time_different_doctors(client):
+    register_client(client)
+    login_client(client)
+
+    with client.application.app_context():
+        doctors = Medico.query.limit(2).all()
+
+    fecha = get_next_weekday().strftime("%Y-%m-%d")
+
+    response1 = client.post(
+        "/reserve",
+        data={
+            "medico_id": str(doctors[0].id),
+            "fecha": fecha,
+            "hora": "09:00",
+        },
+        follow_redirects=True,
+    )
+
+    response2 = client.post(
+        "/reserve",
+        data={
+            "medico_id": str(doctors[1].id),
+            "fecha": fecha,
+            "hora": "09:00",
+        },
+        follow_redirects=True,
+    )
+
+    assert b"Cita reservada" in response1.data
+    assert b"Cita reservada" in response2.data
