@@ -1,0 +1,109 @@
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f7fb;
+    color: #1f2a37;
+}
+
+.navbar {
+    background: linear-gradient(90deg, #0d6efd, #4aa3ff);
+    box-shadow: 0 10px 24px rgba(13, 110, 253, 0.2);
+}
+
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.card-title {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.btn-primary,
+.btn-success {
+    border-radius: 10px;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-success {
+    background-color: #16a34a;
+    border-color: #16a34a;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.form-text {
+    color: #64748b;
+}
+
+.table thead th {
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.85rem;
+}
+
+.availability-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(110px, 1fr));
+    gap: 12px;
+}
+
+.availability-item {
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid transparent;
+    font-weight: 600;
+    text-align: center;
+}
+
+.availability-time {
+    font-size: 0.95rem;
+}
+
+.availability-status {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.availability-free {
+    background: #e7f8ee;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+
+.availability-occupied {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+.availability-empty {
+    padding: 12px;
+}
+
+@media (max-width: 768px) {
+    .availability-grid {
+        grid-template-columns: repeat(2, minmax(110px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .availability-grid {
+        grid-template-columns: 1fr;
+    }
+}

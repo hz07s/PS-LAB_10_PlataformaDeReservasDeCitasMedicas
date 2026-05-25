@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Registro de paciente</h2>
+                <form method="post" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" name="nombre" class="form-control" value="{{ form.get('nombre', '') }}" required>
+                        <div class="form-text">Solo letras y espacios (2-50 caracteres).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ form.get('email', '') }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Edad</label>
+                        <input type="text" name="edad" class="form-control" value="{{ form.get('edad', '') }}" required>
+                        <div class="form-text">Entero entre 18 y 100.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" name="telefono" class="form-control" value="{{ form.get('telefono', '') }}" required>
+                        <div class="form-text">Solo dígitos, 9 a 15 caracteres.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" name="password" class="form-control" required>
+                        <div class="form-text">
+                            Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (!@#$%^&*).
+                            Ejemplo: Pass123!
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirmar contraseña</label>
+                        <input type="password" name="confirm_password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Registrarme</button>
+                </form>
+                <div class="mt-3 text-center">
+                    <a href="{{ url_for('login') }}">Ya tengo cuenta</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

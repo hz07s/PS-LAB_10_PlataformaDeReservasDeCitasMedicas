@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Inicio de sesión</h2>
+                <form method="post" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" value="{{ form.get('email', '') }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" name="password" class="form-control" required>
+                        <div class="form-text">
+                            Mínimo 8 caracteres, mayúscula, minúscula, número y especial (!@#$%^&*). Ejemplo: Pass123!
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+                </form>
+                <div class="mt-3 text-center">
+                    <a href="{{ url_for('register') }}">Crear cuenta</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

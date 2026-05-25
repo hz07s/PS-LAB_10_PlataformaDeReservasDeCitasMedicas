@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title mb-3">Reservar nueva cita</h3>
+                <form method="post" action="{{ url_for('reserve') }}" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Médico</label>
+                        <select name="medico_id" id="medico_id" class="form-select" required>
+                            <option value="">Seleccione</option>
+                            {% for doctor in doctors %}
+                            <option value="{{ doctor.id }}">
+                                {{ doctor.nombre }} - {{ doctor.especialidad }} ({{ doctor.hora_inicio.strftime('%H:%M') }} a {{ doctor.hora_fin.strftime('%H:%M') }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fecha</label>
+                        <input type="date" name="fecha" id="fecha" class="form-control" min="{{ min_date }}" required>
+                        <div id="date-warning" class="text-danger small mt-1"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hora</label>
+                        <select name="hora" id="hora" class="form-select" required>
+                            <option value="">Seleccione un médico y fecha</option>
+                        </select>
+                        <div class="form-text">Las citas son cada 30 minutos. Ejemplo: 09:00, 09:30, ...</div>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Reservar</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <h3 class="card-title mb-3">Disponibilidad de médicos</h3>
+                <p class="text-muted mb-3">Seleccione un médico y fecha para ver horarios libres y ocupados.</p>
+                <div id="availability-grid" class="availability-grid">
+                    <div class="availability-empty text-muted">Sin selección.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <h3 class="card-title mb-3">Médicos precargados</h3>
+                <ul class="list-group">
+                    {% for doctor in doctors %}
+                    <li class="list-group-item">
+                        <strong>{{ doctor.nombre }}</strong> - {{ doctor.especialidad }}<br>
+                        Horario: {{ doctor.hora_inicio.strftime('%H:%M') }} a {{ doctor.hora_fin.strftime('%H:%M') }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title mb-3">Mis citas</h3>
+                {% if citas %}
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle">
+                        <thead>
+                            <tr>
+                                <th>Médico</th>
+                                <th>Especialidad</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in citas %}
+                            <tr>
+                                <td>{{ item.cita.medico.nombre }}</td>
+                                <td>{{ item.cita.medico.especialidad }}</td>
+                                <td>{{ item.cita.fecha.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ item.cita.hora.strftime('%H:%M') }}</td>
+                                <td>{{ item.estado }}</td>
+                                <td>
+                                    {% if item.estado == 'Programada' and item.cancelable %}
+                                    <form method="post" action="{{ url_for('cancel', cita_id=item.cita.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Solo se puede cancelar si faltan al menos 2 horas">
+                                            Cancelar
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-muted" title="Solo se puede cancelar si faltan al menos 2 horas">No cancelable</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No tiene citas registradas.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const doctorSelect = document.getElementById("medico_id");
+    const dateInput = document.getElementById("fecha");
+    const timeSelect = document.getElementById("hora");
+    const availabilityGrid = document.getElementById("availability-grid");
+    const dateWarning = document.getElementById("date-warning");
+    const minDate = "{{ min_date }}";
+
+    function resetAvailability(message) {
+        availabilityGrid.innerHTML = `<div class="availability-empty text-muted">${message}</div>`;
+        timeSelect.innerHTML = `<option value="">${message}</option>`;
+    }
+
+    function isWeekend(dateString) {
+        const date = new Date(dateString + "T00:00:00");
+        const day = date.getDay();
+        return day === 0 || day === 6;
+    }
+
+    function isBeforeMin(dateString) {
+        const selected = new Date(dateString + "T00:00:00");
+        const min = new Date(minDate + "T00:00:00");
+        return selected < min;
+    }
+
+    function validateDateInput() {
+        const value = dateInput.value;
+        if (!value) {
+            dateWarning.textContent = "";
+            return true;
+        }
+        if (isBeforeMin(value)) {
+            dateWarning.textContent = "La fecha debe ser al menos un día después de hoy.";
+            return false;
+        }
+        if (isWeekend(value)) {
+            dateWarning.textContent = "La fecha no puede ser sábado ni domingo.";
+            return false;
+        }
+        dateWarning.textContent = "";
+        return true;
+    }
+
+    async function loadAvailability() {
+        const medicoId = doctorSelect.value;
+        const fecha = dateInput.value;
+
+        if (!medicoId || !fecha) {
+            resetAvailability("Seleccione un médico y fecha");
+            return;
+        }
+
+        if (!validateDateInput()) {
+            resetAvailability("Fecha inválida");
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/availability?medico_id=${medicoId}&fecha=${fecha}`);
+            const data = await response.json();
+            if (!response.ok) {
+                resetAvailability(data.error || "No disponible");
+                return;
+            }
+
+            availabilityGrid.innerHTML = "";
+            timeSelect.innerHTML = "";
+
+            const freeOptions = data.slots.filter(slot => slot.status === "Libre");
+            if (freeOptions.length === 0) {
+                timeSelect.innerHTML = "<option value=\"\">Sin horarios libres</option>";
+            } else {
+                timeSelect.innerHTML = "<option value=\"\">Seleccione</option>";
+                freeOptions.forEach(slot => {
+                    const option = document.createElement("option");
+                    option.value = slot.time;
+                    option.textContent = slot.time;
+                    timeSelect.appendChild(option);
+                });
+            }
+
+            data.slots.forEach(slot => {
+                const item = document.createElement("div");
+                item.className = slot.status === "Libre"
+                    ? "availability-item availability-free"
+                    : "availability-item availability-occupied";
+                item.innerHTML = `
+                    <span class="availability-time">${slot.time}</span>
+                    <span class="availability-status">${slot.status}</span>
+                `;
+                availabilityGrid.appendChild(item);
+            });
+        } catch (error) {
+            resetAvailability("Error al consultar disponibilidad");
+        }
+    }
+
+    doctorSelect.addEventListener("change", loadAvailability);
+    dateInput.addEventListener("change", () => {
+        validateDateInput();
+        loadAvailability();
+    });
+</script>
+{% endblock %}
