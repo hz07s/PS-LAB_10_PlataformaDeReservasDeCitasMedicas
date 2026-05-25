@@ -7,8 +7,8 @@ MediResist es una plataforma web para registrar pacientes y reservar citas médi
 1. Abrir una terminal en la carpeta `plataforma_citas_medicas`.
 2. Ejecutar:
    ```bash
-   python -m venv .venv
-   .\.venv\Scripts\activate
+   python -m venv venv
+   venv\Scripts\activate
    pip install -r requirements.txt
    python init_db.py
    python app.py
@@ -22,10 +22,10 @@ Permite crear una cuenta de paciente.
 
 **Campos y reglas principales:**
 - **Nombre:** Solo letras y espacios, de 2 a 50 caracteres.
-- **Email:** Formato valido (ej. usuario@dominio.com).
+- **Email:** Formato válido (ASCII) con dominio real (ej. usuario@dominio.com).
 - **Edad:** Entero entre 18 y 100.
-- **Telefono:** Solo digitos, 9 a 15 caracteres.
-- **Contraseña:** Minimo 8 caracteres, con mayuscula, minuscula, digito y caracter especial !@#$%^&*.
+- **Teléfono:** Formato Perú, 9 dígitos iniciando con 9.
+- **Contraseña:** 8-64 caracteres, mayúscula, minúscula, dígito y símbolo permitido (!@#$%^&*). Solo letras inglesas y números.
 
 **Ejemplo valido:**
 - Nombre: Ana Lopez
@@ -40,9 +40,8 @@ Permite crear una cuenta de paciente.
 - Edad: 17
 - Telefono: 123-456
 - Contraseña: ana1234
-
-**Captura simulada:**
-> [Registro: formulario con campos y un boton "Registrarme"]
+ 
+**Tip:** Puede usar "Mostrar contraseña" para verificar lo ingresado.
 
 ### 3.2 Inicio de sesión (/login)
 Ingresar con email y contraseña.
@@ -51,9 +50,6 @@ Ingresar con email y contraseña.
 - Mensaje generico si email o contraseña son incorrectos.
 - Despues de 3 intentos fallidos consecutivos, se bloquea por 5 minutos.
 
-**Captura simulada:**
-> [Login: formulario de email y contraseña con boton "Ingresar"]
-
 ### 3.3 Panel principal (/dashboard)
 Muestra:
 - Lista de medicos precargados.
@@ -61,8 +57,6 @@ Muestra:
 - Tabla de citas futuras y pasadas con indicador de cancelacion.
 - Tabla de disponibilidad con horarios libres (verde) y ocupados (rojo).
 
-**Captura simulada:**
-> [Dashboard: card de "Reservar cita" a la izquierda y "Mis citas" a la derecha]
 
 ### 3.4 Cerrar sesión (/logout)
 Finaliza la sesion y vuelve al login.
@@ -77,6 +71,7 @@ Finaliza la sesion y vuelve al login.
 - La fecha debe ser al menos un dia despues de hoy.
 - La cita no puede exceder los 120 dias a partir de hoy.
 - Horas validas dentro del horario del medico (inicio inclusive, fin exclusivo).
+- No se puede reservar durante el horario de almuerzo.
 - No se permite doble reserva para el mismo medico, fecha y hora.
 
 **Ejemplo valido:**
@@ -109,6 +104,6 @@ Usuario tester:
 - Contrasena: Test123!
 
 Medicos disponibles:
-- Dr. Juan Perez - Cardiologia - 09:00 a 17:00
-- Dra. Maria Gomez - Dermatologia - 08:00 a 14:00
-- Dr. Luis Fernandez - Pediatria - 10:00 a 18:00
+- Dr. Juan Perez - Cardiologia - 09:00 a 17:00 (Almuerzo 12:30-13:30)
+- Dra. Maria Gomez - Dermatologia - 08:00 a 14:00 (Almuerzo 12:30-13:30)
+- Dr. Luis Fernandez - Pediatria - 10:00 a 18:00 (Almuerzo 12:30-13:30)

@@ -24,19 +24,23 @@
                     <div class="mb-3">
                         <label class="form-label">Teléfono</label>
                         <input type="text" name="telefono" class="form-control" value="{{ form.get('telefono', '') }}" required>
-                        <div class="form-text">Solo dígitos, 9 a 15 caracteres.</div>
+                        <div class="form-text">Formato Perú: 9 dígitos iniciando con 9 (sin +51).</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Contraseña</label>
                         <input type="password" name="password" class="form-control" required>
                         <div class="form-text">
-                            Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (!@#$%^&*).
-                            Ejemplo: Pass123!
+                            8-64 caracteres, mayúscula, minúscula, número y símbolo permitido (!@#$%^&*).
+                            Solo letras inglesas y números. Ejemplo: Pass123!
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Confirmar contraseña</label>
                         <input type="password" name="confirm_password" class="form-control" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input class="form-check-input" type="checkbox" id="toggle-password">
+                        <label class="form-check-label" for="toggle-password">Mostrar contraseña</label>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Registrarme</button>
                 </form>
@@ -47,4 +51,15 @@
         </div>
     </div>
 </div>
+<script>
+    const togglePassword = document.getElementById("toggle-password");
+    const passwordField = document.querySelector("input[name='password']");
+    const confirmField = document.querySelector("input[name='confirm_password']");
+
+    togglePassword.addEventListener("change", () => {
+        const type = togglePassword.checked ? "text" : "password";
+        passwordField.type = type;
+        confirmField.type = type;
+    });
+</script>
 {% endblock %}

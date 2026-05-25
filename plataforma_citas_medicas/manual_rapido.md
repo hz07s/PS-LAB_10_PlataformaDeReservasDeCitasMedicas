@@ -3,8 +3,8 @@
 ## 1. Inicio rápido
 ```bash
 cd plataforma_citas_medicas
-python -m venv .venv
-.\.venv\Scripts\activate
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
 python init_db.py
 python app.py
@@ -33,9 +33,9 @@ pytest
 
 ## 5. Datos precargados
 **Médicos**
-- Dr. Juan Perez - Cardiología - 09:00 a 17:00  
-- Dra. Maria Gomez - Dermatología - 08:00 a 14:00  
-- Dr. Luis Fernandez - Pediatría - 10:00 a 18:00  
+- Dr. Juan Perez - Cardiología - 09:00 a 17:00 (Almuerzo 12:30-13:30)  
+- Dra. Maria Gomez - Dermatología - 08:00 a 14:00 (Almuerzo 12:30-13:30)  
+- Dr. Luis Fernandez - Pediatría - 10:00 a 18:00 (Almuerzo 12:30-13:30)  
 
 **Usuarios adicionales**
 - Ana Lopez y Carlos Ruiz con citas distribuidas en distintos médicos (futuras y pasadas).
@@ -44,10 +44,10 @@ pytest
 - **Nombre:** solo letras y espacios (2-50).
 - **Email:** formato válido y único.
 - **Edad:** entero 18-100.
-- **Teléfono:** solo dígitos (9-15).
-- **Contraseña:** mínimo 8 con mayúscula, minúscula, dígito y especial (!@#$%^&*).
+- **Teléfono:** Perú, 9 dígitos iniciando con 9.
+- **Contraseña:** 8-64 con mayúscula, minúscula, dígito y especial (!@#$%^&*). Solo letras inglesas y números.
 - **Fecha de cita:** >= hoy+1, solo lunes a viernes.
-- **Hora:** bloques de 30 min y dentro del horario del médico.
+- **Hora:** bloques de 30 min, dentro del horario del médico y fuera del almuerzo.
 
 ## 7. Si ves errores de esquema
 Si cambió el modelo o aparece un error de columnas, borra `mediresist.db` y ejecuta de nuevo:

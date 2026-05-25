@@ -9,12 +9,16 @@ def seed_doctors(session) -> None:
     """Crea los medicos base si la tabla esta vacia."""
     if session.query(Medico).count() > 0:
         return
+    almuerzo_inicio = time_type(12, 30)
+    almuerzo_fin = time_type(13, 30)
     doctors = [
         Medico(
             nombre="Dr. Juan Perez",
             especialidad="Cardiologia",
             hora_inicio=time_type(9, 0),
             hora_fin=time_type(17, 0),
+            almuerzo_inicio=almuerzo_inicio,
+            almuerzo_fin=almuerzo_fin,
             duracion_min=30,
         ),
         Medico(
@@ -22,6 +26,8 @@ def seed_doctors(session) -> None:
             especialidad="Dermatologia",
             hora_inicio=time_type(8, 0),
             hora_fin=time_type(14, 0),
+            almuerzo_inicio=almuerzo_inicio,
+            almuerzo_fin=almuerzo_fin,
             duracion_min=30,
         ),
         Medico(
@@ -29,6 +35,8 @@ def seed_doctors(session) -> None:
             especialidad="Pediatria",
             hora_inicio=time_type(10, 0),
             hora_fin=time_type(18, 0),
+            almuerzo_inicio=almuerzo_inicio,
+            almuerzo_fin=almuerzo_fin,
             duracion_min=30,
         ),
     ]
@@ -152,6 +160,20 @@ def generate_time_slots(
     return slots
 
 
+def _overlaps_lunch(
+    slot_time: time_type,
+    duration_min: int,
+    lunch_start: time_type,
+    lunch_end: time_type,
+) -> bool:
+    """Indica si el bloque de la cita se cruza con el almuerzo."""
+    slot_start = datetime.combine(date_type.today(), slot_time)
+    slot_end = slot_start + timedelta(minutes=duration_min)
+    lunch_start_dt = datetime.combine(date_type.today(), lunch_start)
+    lunch_end_dt = datetime.combine(date_type.today(), lunch_end)
+    return slot_start < lunch_end_dt and slot_end > lunch_start_dt
+
+
 def get_availability(session, medico: Medico, fecha: date_type) -> list[dict]:
     """Devuelve una lista de horarios con estado libre/ocupado."""
     slots = generate_time_slots(medico.hora_inicio, medico.hora_fin, medico.duracion_min)
@@ -161,10 +183,22 @@ def get_availability(session, medico: Medico, fecha: date_type) -> list[dict]:
         .filter_by(medico_id=medico.id, fecha=fecha, estado="programada")
         .all()
     }
-    return [
-        {"time": slot, "status": "Ocupada" if slot in occupied else "Libre"}
-        for slot in slots
-    ]
+    availability = []
+    for slot in slots:
+        slot_time = datetime.strptime(slot, "%H:%M").time()
+        if _overlaps_lunch(
+            slot_time,
+            medico.duracion_min,
+            medico.almuerzo_inicio,
+            medico.almuerzo_fin,
+        ):
+            status = "Almuerzo"
+        elif slot in occupied:
+            status = "Ocupada"
+        else:
+            status = "Libre"
+        availability.append({"time": slot, "status": status})
+    return availability
 
 
 def check_disponibilidad(

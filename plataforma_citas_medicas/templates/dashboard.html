@@ -13,7 +13,7 @@
                             <option value="">Seleccione</option>
                             {% for doctor in doctors %}
                             <option value="{{ doctor.id }}">
-                                {{ doctor.nombre }} - {{ doctor.especialidad }} ({{ doctor.hora_inicio.strftime('%H:%M') }} a {{ doctor.hora_fin.strftime('%H:%M') }})
+                                {{ doctor.nombre }} - {{ doctor.especialidad }} ({{ doctor.hora_inicio.strftime('%H:%M') }} a {{ doctor.hora_fin.strftime('%H:%M') }}, almuerzo {{ doctor.almuerzo_inicio.strftime('%H:%M') }}-{{ doctor.almuerzo_fin.strftime('%H:%M') }})
                             </option>
                             {% endfor %}
                         </select>
@@ -28,7 +28,7 @@
                         <select name="hora" id="hora" class="form-select" required>
                             <option value="">Seleccione un médico y fecha</option>
                         </select>
-                        <div class="form-text">Las citas son cada 30 minutos. Ejemplo: 09:00, 09:30, ...</div>
+                        <div class="form-text">Las citas son cada 30 minutos y no se atiende en horario de almuerzo.</div>
                     </div>
                     <button type="submit" class="btn btn-success w-100">Reservar</button>
                 </form>
@@ -52,7 +52,8 @@
                     {% for doctor in doctors %}
                     <li class="list-group-item">
                         <strong>{{ doctor.nombre }}</strong> - {{ doctor.especialidad }}<br>
-                        Horario: {{ doctor.hora_inicio.strftime('%H:%M') }} a {{ doctor.hora_fin.strftime('%H:%M') }}
+                        Horario: {{ doctor.hora_inicio.strftime('%H:%M') }} a {{ doctor.hora_fin.strftime('%H:%M') }}<br>
+                        Almuerzo: {{ doctor.almuerzo_inicio.strftime('%H:%M') }} a {{ doctor.almuerzo_fin.strftime('%H:%M') }}
                     </li>
                     {% endfor %}
                 </ul>
@@ -153,7 +154,7 @@
             return false;
         }
         if (isAfterMax(value)) {
-            dateWarning.textContent = "La cita no puede exceder los 120 dias.";
+            dateWarning.textContent = "La cita no puede exceder los 120 días.";
             return false;
         }
         if (isWeekend(value)) {
@@ -204,9 +205,13 @@
 
             data.slots.forEach(slot => {
                 const item = document.createElement("div");
-                item.className = slot.status === "Libre"
-                    ? "availability-item availability-free"
-                    : "availability-item availability-occupied";
+                let statusClass = "availability-occupied";
+                if (slot.status === "Libre") {
+                    statusClass = "availability-free";
+                } else if (slot.status === "Almuerzo") {
+                    statusClass = "availability-lunch";
+                }
+                item.className = `availability-item ${statusClass}`;
                 item.innerHTML = `
                     <span class="availability-time">${slot.time}</span>
                     <span class="availability-status">${slot.status}</span>

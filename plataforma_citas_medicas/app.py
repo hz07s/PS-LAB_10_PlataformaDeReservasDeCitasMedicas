@@ -113,6 +113,9 @@ def create_app(test_config: dict | None = None) -> Flask:
             cita_cols = {col["name"] for col in inspector.get_columns("citas")}
             if "usuario_id" not in cita_cols:
                 needs_reset = True
+            medico_cols = {col["name"] for col in inspector.get_columns("medicos")}
+            if not {"almuerzo_inicio", "almuerzo_fin"}.issubset(medico_cols):
+                needs_reset = True
 
         if needs_reset:
             logging.warning("Schema desactualizado detectado. Recreando base de datos.")
@@ -258,6 +261,8 @@ def create_app(test_config: dict | None = None) -> Flask:
                 doctor.hora_inicio,
                 doctor.hora_fin,
                 doctor.duracion_min,
+                doctor.almuerzo_inicio,
+                doctor.almuerzo_fin,
             )
         except ValueError as exc:
             flash(str(exc), "error")

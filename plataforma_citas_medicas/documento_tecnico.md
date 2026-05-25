@@ -14,14 +14,14 @@
 | Campo | Clases validas | Clases invalidas |
 | --- | --- | --- |
 | Nombre | Letras y espacios, 2-50 caracteres | Longitud <2, >50; contiene numeros; contiene simbolos |
-| Email | Formato local@dominio.tld, longitud <=100 | Sin @; sin punto en dominio; longitud >100; espacios |
+| Email | Formato local@dominio.tld (ASCII), longitud <=100 | Sin @; sin punto en dominio; longitud >100; caracteres no ASCII |
 | Edad | Entero 18-100 | <18; >100; decimal; letras |
-| Telefono | Digitos 9-15 | Longitud <9 o >15; contiene no digitos |
-| Contrasena | >=8 con mayuscula, minuscula, digito y !@#$%^&* | Falta uno de los requisitos; longitud <8 |
+| Telefono | 9 digitos iniciando con 9 | Longitud !=9; no inicia con 9; contiene no digitos |
+| Contrasena | 8-64 con mayuscula, minuscula, digito y !@#$%^&* (ASCII) | Falta requisitos; longitud fuera de rango; caracteres no permitidos |
 | Confirmacion | Igual a contrasena | Distinta a contrasena |
 | Medico | ID existente | ID inexistente; ID no numerico |
-| Fecha | YYYY-MM-DD; >= hoy+1; lunes a viernes | Formato invalido; fecha pasada; fin de semana |
-| Hora | HH:MM; minutos 00/30; dentro de horario | Minutos distintos de 00/30; fuera de horario; hora >= fin |
+| Fecha | YYYY-MM-DD; >= hoy+1; <= hoy+120; lunes a viernes | Formato invalido; fecha pasada; fin de semana; >120 dias |
+| Hora | HH:MM; minutos 00/30; dentro de horario; fuera de almuerzo | Minutos distintos de 00/30; fuera de horario; hora >= fin; en almuerzo |
 | Disponibilidad | Sin cita previa mismo medico/fecha/hora | Ya existe cita en ese horario |
 | Cancelacion | Cita futura con >= 2 horas de anticipacion | Cita pasada; diferencia < 2 horas |
 
@@ -34,9 +34,9 @@
 | Email (longitud) | 99 chars | 100 chars | 101 chars |
 | Edad | 17 | 18 | 19 |
 | Edad (max) | 99 | 100 | 101 |
-| Telefono (min) | 8 digitos | 9 digitos | 10 digitos |
-| Telefono (max) | 14 digitos | 15 digitos | 16 digitos |
+| Telefono (longitud) | 8 digitos | 9 digitos | 10 digitos |
 | Fecha (min) | hoy | hoy+1 | hoy+2 |
+| Fecha (max) | hoy+119 | hoy+120 | hoy+121 |
 | Hora (inicio) | 08:59 | 09:00 | 09:01 |
 | Hora (bloques) | 09:29 | 09:30 | 09:31 |
 | Hora (fin) | 16:30 | 17:00 | 17:01 |
@@ -60,10 +60,9 @@
 | TC-12 | Edad menor al limite | 17 | Error |
 | TC-13 | Edad limite superior | 100 | Aceptado |
 | TC-14 | Edad mayor al limite | 101 | Error |
-| TC-15 | Telefono minimo | 9 digitos | Aceptado |
-| TC-16 | Telefono menor a minimo | 8 digitos | Error |
-| TC-17 | Telefono maximo | 15 digitos | Aceptado |
-| TC-18 | Telefono mayor a maximo | 16 digitos | Error |
+| TC-15 | Telefono valido | 9 digitos iniciando con 9 | Aceptado |
+| TC-16 | Telefono invalido corto | 8 digitos | Error |
+| TC-17 | Telefono invalido por inicio | 812345678 | Error |
 | TC-19 | Password valida | Test123! | Aceptado |
 | TC-20 | Password sin mayuscula | test123! | Error |
 | TC-21 | Password sin minuscula | TEST123! | Error |
@@ -79,10 +78,12 @@
 | TC-31 | Hora en bloque | 09:30 | Aceptado |
 | TC-32 | Hora ultima valida | 16:30 | Aceptado |
 | TC-33 | Hora fin exacta | 17:00 | Error |
-| TC-34 | Disponibilidad ocupada | cita duplicada | Error |
-| TC-35 | Cancelacion 2h exactas | now+2h | Aceptado |
-| TC-36 | Cancelacion 1h59 | now+1h59 | Error |
-| TC-37 | Cancelacion pasada | now-1m | Error |
+| TC-34 | Hora en almuerzo | 12:30 | Error |
+| TC-35 | Fecha mayor a 120 dias | hoy+121 | Error |
+| TC-36 | Disponibilidad ocupada | cita duplicada | Error |
+| TC-37 | Cancelacion 2h exactas | now+2h | Aceptado |
+| TC-38 | Cancelacion 1h59 | now+1h59 | Error |
+| TC-39 | Cancelacion pasada | now-1m | Error |
 
 ## 5. Cobertura de pruebas
 Las pruebas unitarias y de integracion implementadas con pytest cubren el 100% de las particiones de equivalencia y los valores limite listados en este documento.

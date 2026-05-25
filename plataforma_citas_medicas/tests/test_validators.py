@@ -37,7 +37,7 @@ def test_validate_name_trim():
     assert validate_name("  Juan Perez  ") == "Juan Perez"
 @pytest.mark.parametrize(
     "value",
-    ["test@example.com", "user.name@dominio.co"],
+    ["test@example.com", "user.name+tag@dominio.co"],
 )
 def test_validate_email_valid(value):
     assert validate_email(value) == value.lower()
@@ -45,7 +45,17 @@ def test_validate_email_valid(value):
 
 @pytest.mark.parametrize(
     "value",
-    ["testexample.com", "test@domain", "test@domain.", "test@.com"],
+    [
+        "testexample.com",
+        "test@domain",
+        "test@domain.",
+        "test@.com",
+        "test..double@dominio.com",
+        "test@do_main.com",
+        "tést@example.com",
+        "test@domain.c",
+        "test@domain.thisistoolongtlddddddddddddd",
+    ],
 )
 def test_validate_email_invalid(value):
     with pytest.raises(ValueError):
@@ -93,7 +103,7 @@ def test_validate_age_invalid(value):
 
 @pytest.mark.parametrize(
     "value",
-    ["123456789", "123456789012345"],
+    ["912345678", "999888777"],
 )
 def test_validate_phone_valid(value):
     assert validate_phone(value) == value
@@ -101,7 +111,7 @@ def test_validate_phone_valid(value):
 
 @pytest.mark.parametrize(
     "value",
-    ["12345678", "1234567890123456", "123-456-789", "phone"],
+    ["12345678", "1234567890", "123-456-789", "phone", "812345678"],
 )
 def test_validate_phone_invalid(value):
     with pytest.raises(ValueError):
@@ -121,15 +131,28 @@ def test_validate_password_valid():
 
 @pytest.mark.parametrize(
     "value",
-    ["short1!", "nouppercase1!", "NOLOWERCASE1!", "NoDigit!!", "NoSpecial1"],
+    [
+        "short1!",
+        "nouppercase1!",
+        "NOLOWERCASE1!",
+        "NoDigit!!",
+        "NoSpecial1",
+        "Tiene Espacio1!",
+        "Ñandú123!",
+        "Emoji123!😀",
+        "Test123?",
+    ],
 )
 def test_validate_password_invalid(value):
     with pytest.raises(ValueError):
         validate_password(value)
 
 def test_validate_password_long():
-    password = "Aa1!" + "x" * 100
+    password = "Aa1!" + "x" * 60
     assert validate_password(password)
+    too_long = "Aa1!" + "x" * 61
+    with pytest.raises(ValueError):
+        validate_password(too_long)
 
 def test_validate_confirm_password():
     validate_confirm_password("Test123!", "Test123!")
@@ -150,6 +173,13 @@ def test_validate_date_limits():
     today = date(2026, 5, 18)
     valid_date = (today + timedelta(days=1)).strftime("%Y-%m-%d")
     assert validate_date(valid_date, today=today)
+
+    max_valid = (today + timedelta(days=120)).strftime("%Y-%m-%d")
+    assert validate_date(max_valid, today=today)
+
+    too_far = (today + timedelta(days=121)).strftime("%Y-%m-%d")
+    with pytest.raises(ValueError):
+        validate_date(too_far, today=today)
 
     for offset in (-1, 0):
         with pytest.raises(ValueError):
@@ -184,6 +214,19 @@ def test_validate_time_blocks(value, is_valid):
     else:
         with pytest.raises(ValueError):
             validate_time(value, start, end, 30)
+
+
+def test_validate_time_lunch_block():
+    start = time(9, 0)
+    end = time(17, 0)
+    lunch_start = time(12, 30)
+    lunch_end = time(13, 30)
+    with pytest.raises(ValueError):
+        validate_time("12:30", start, end, 30, lunch_start, lunch_end)
+    with pytest.raises(ValueError):
+        validate_time("13:00", start, end, 30, lunch_start, lunch_end)
+    assert validate_time("11:30", start, end, 30, lunch_start, lunch_end)
+    assert validate_time("13:30", start, end, 30, lunch_start, lunch_end)
 
 @pytest.mark.parametrize(
     "value",

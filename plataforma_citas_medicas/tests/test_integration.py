@@ -13,7 +13,7 @@ def register_client(client, email="test@example.com"):
             "nombre": "Juan Perez",
             "email": email,
             "edad": "30",
-            "telefono": "123456789",
+            "telefono": "912345678",
             "password": "Test123!",
             "confirm_password": "Test123!",
         },
@@ -65,6 +65,38 @@ def test_duplicate_email_registration(client):
     register_client(client)
     response = register_client(client)
     assert b"El email ya est" in response.data
+
+
+def test_register_invalid_phone(client):
+    response = client.post(
+        "/register",
+        data={
+            "nombre": "Juan Perez",
+            "email": "phone@test.com",
+            "edad": "30",
+            "telefono": "812345678",
+            "password": "Test123!",
+            "confirm_password": "Test123!",
+        },
+        follow_redirects=True,
+    )
+    assert b"tel" in response.data.lower()
+
+
+def test_register_invalid_password(client):
+    response = client.post(
+        "/register",
+        data={
+            "nombre": "Juan Perez",
+            "email": "pass@test.com",
+            "edad": "30",
+            "telefono": "912345678",
+            "password": "Test123?",
+            "confirm_password": "Test123?",
+        },
+        follow_redirects=True,
+    )
+    assert b"contrase" in response.data.lower()
 
 
 def test_reservation_and_conflict(client):
@@ -144,6 +176,7 @@ def test_api_availability(client):
     data = response.get_json()
     assert "slots" in data
     assert any(slot["status"] == "Libre" for slot in data["slots"])
+    assert any(slot["status"] == "Almuerzo" for slot in data["slots"])
 
 def test_api_requires_login(client):
     response = client.get(
@@ -209,6 +242,28 @@ def test_reserve_invalid_time(client):
     )
 
     assert b"hora" in response.data.lower()
+
+
+def test_reserve_lunch_time_blocked(client):
+    register_client(client)
+    login_client(client)
+
+    with client.application.app_context():
+        doctor = Medico.query.first()
+
+    fecha = get_next_weekday().strftime("%Y-%m-%d")
+
+    response = client.post(
+        "/reserve",
+        data={
+            "medico_id": str(doctor.id),
+            "fecha": fecha,
+            "hora": "12:30",
+        },
+        follow_redirects=True,
+    )
+
+    assert b"almuerzo" in response.data.lower()
 
 def test_user_cannot_cancel_other_user_appointment(client):
     register_client(client, "user1@test.com")

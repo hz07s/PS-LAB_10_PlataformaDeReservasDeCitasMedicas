@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time as time_type
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -40,15 +40,29 @@ class Medico(db.Model):
     especialidad = db.Column(db.String(80), nullable=False)
     hora_inicio = db.Column(db.Time, nullable=False)
     hora_fin = db.Column(db.Time, nullable=False)
+    almuerzo_inicio = db.Column(db.Time, nullable=False, default=time_type(12, 30))
+    almuerzo_fin = db.Column(db.Time, nullable=False, default=time_type(13, 30))
     duracion_min = db.Column(db.Integer, nullable=False, default=30)
 
     citas = db.relationship("Cita", backref="medico", lazy=True)
 
-    def __init__(self, nombre, especialidad, hora_inicio, hora_fin, duracion_min=30, **kwargs):
+    def __init__(
+        self,
+        nombre,
+        especialidad,
+        hora_inicio,
+        hora_fin,
+        almuerzo_inicio=time_type(12, 30),
+        almuerzo_fin=time_type(13, 30),
+        duracion_min=30,
+        **kwargs,
+    ):
         kwargs["nombre"] = nombre
         kwargs["especialidad"] = especialidad
         kwargs["hora_inicio"] = hora_inicio
         kwargs["hora_fin"] = hora_fin
+        kwargs["almuerzo_inicio"] = almuerzo_inicio
+        kwargs["almuerzo_fin"] = almuerzo_fin
         kwargs["duracion_min"] = duracion_min
         super().__init__(**kwargs)
 

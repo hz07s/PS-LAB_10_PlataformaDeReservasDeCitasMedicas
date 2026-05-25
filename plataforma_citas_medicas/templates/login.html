@@ -15,8 +15,12 @@
                         <label class="form-label">Contraseña</label>
                         <input type="password" name="password" class="form-control" required>
                         <div class="form-text">
-                            Mínimo 8 caracteres, mayúscula, minúscula, número y especial (!@#$%^&*). Ejemplo: Pass123!
+                            8-64 caracteres, mayúscula, minúscula, número y símbolo permitido (!@#$%^&*). Ejemplo: Pass123!
                         </div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input class="form-check-input" type="checkbox" id="toggle-password">
+                        <label class="form-check-label" for="toggle-password">Mostrar contraseña</label>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Ingresar</button>
                 </form>
@@ -27,4 +31,12 @@
         </div>
     </div>
 </div>
+<script>
+    const togglePassword = document.getElementById("toggle-password");
+    const passwordField = document.querySelector("input[name='password']");
+
+    togglePassword.addEventListener("change", () => {
+        passwordField.type = togglePassword.checked ? "text" : "password";
+    });
+</script>
 {% endblock %}

@@ -92,6 +92,12 @@ body {
     border-color: #fecaca;
 }
 
+.availability-lunch {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fde68a;
+}
+
 .availability-empty {
     padding: 12px;
 }

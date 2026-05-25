@@ -3,9 +3,15 @@ from datetime import datetime, timedelta, date as date_type, time as time_type
 
 
 NAME_RE = re.compile(r"^[A-Za-z ]+$")
-EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-PHONE_RE = re.compile(r"^\d{9,15}$")
+EMAIL_RE = re.compile(
+    r"^(?=.{1,100}$)([A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+"
+    r"(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*)@"
+    r"([A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)"
+    r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$"
+)
+PHONE_RE = re.compile(r"^9\d{8}$")
 PASSWORD_SPECIALS = "!@#$%^&*"
+PASSWORD_ALLOWED_RE = re.compile(rf"^[A-Za-z0-9{re.escape(PASSWORD_SPECIALS)}]+$")
 
 
 def validate_name(value: str) -> str:
@@ -27,8 +33,14 @@ def validate_email(value: str) -> str:
     cleaned = value.strip().lower()
     if len(cleaned) > 100:
         raise ValueError("El email no puede exceder 100 caracteres.")
+    if not cleaned.isascii():
+        raise ValueError("El email solo puede contener caracteres ASCII.")
     if not EMAIL_RE.fullmatch(cleaned):
         raise ValueError("El email no tiene un formato válido.")
+    domain = cleaned.split("@", 1)[1]
+    tld = domain.rsplit(".", 1)[-1]
+    if len(tld) < 2 or len(tld) > 24:
+        raise ValueError("El email no tiene un dominio válido.")
     return cleaned
 
 
@@ -46,12 +58,12 @@ def validate_age(value: str) -> int:
 
 
 def validate_phone(value: str) -> str:
-    """Valida telefono solo con digitos y longitud 9-15."""
+    """Valida telefono Peru: 9 digitos iniciando con 9."""
     if value is None:
         raise ValueError("El teléfono es obligatorio.")
     cleaned = str(value).strip()
     if not PHONE_RE.fullmatch(cleaned):
-        raise ValueError("El teléfono debe tener entre 9 y 15 dígitos.")
+        raise ValueError("El teléfono debe tener 9 dígitos y empezar con 9.")
     return cleaned
 
 
@@ -61,6 +73,13 @@ def validate_password(value: str) -> str:
         raise ValueError("La contraseña es obligatoria.")
     if len(value) < 8:
         raise ValueError("La contraseña debe tener al menos 8 caracteres.")
+    if len(value) > 64:
+        raise ValueError("La contraseña no puede exceder 64 caracteres.")
+    if not PASSWORD_ALLOWED_RE.fullmatch(value):
+        raise ValueError(
+            "La contraseña solo puede usar letras inglesas, números y estos símbolos: "
+            "!@#$%^&*."
+        )
     if not re.search(r"[A-Z]", value):
         raise ValueError("La contraseña debe incluir al menos una mayúscula.")
     if not re.search(r"[a-z]", value):
@@ -109,14 +128,19 @@ def validate_date(value: str, today: date_type | None = None) -> date_type:
     if selected < min_date:
         raise ValueError("La fecha debe ser al menos un día después de hoy.")
     if selected > max_date:
-        raise ValueError("La cita no puede exceder los 120 dias.")
+        raise ValueError("La cita no puede exceder los 120 días.")
     if selected.weekday() >= 5:
         raise ValueError("La fecha debe ser un día hábil (lunes a viernes).")
     return selected
 
 
 def validate_time(
-    value: str, start: time_type, end: time_type, duration_min: int = 30
+    value: str,
+    start: time_type,
+    end: time_type,
+    duration_min: int = 30,
+    lunch_start: time_type | None = None,
+    lunch_end: time_type | None = None,
 ) -> time_type:
     """Valida hora con formato, bloque de 30 minutos y horario del medico."""
     if value is None:
@@ -139,6 +163,12 @@ def validate_time(
         raise ValueError("El médico no atiende a esa hora.")
     if candidate + timedelta(minutes=duration_min) > end_dt:
         raise ValueError("El médico no atiende a esa hora.")
+    if lunch_start and lunch_end:
+        lunch_start_dt = datetime.combine(date_type.today(), lunch_start)
+        lunch_end_dt = datetime.combine(date_type.today(), lunch_end)
+        candidate_end = candidate + timedelta(minutes=duration_min)
+        if candidate < lunch_end_dt and candidate_end > lunch_start_dt:
+            raise ValueError("El médico no atiende durante el almuerzo.")
     return parsed
 
 
