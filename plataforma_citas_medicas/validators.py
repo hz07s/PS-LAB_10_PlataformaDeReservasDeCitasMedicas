@@ -105,8 +105,11 @@ def validate_date(value: str, today: date_type | None = None) -> date_type:
 
     base = today or date_type.today()
     min_date = base + timedelta(days=1)
+    max_date = base + timedelta(days=120)
     if selected < min_date:
         raise ValueError("La fecha debe ser al menos un día después de hoy.")
+    if selected > max_date:
+        raise ValueError("La cita no puede exceder los 120 dias.")
     if selected.weekday() >= 5:
         raise ValueError("La fecha debe ser un día hábil (lunes a viernes).")
     return selected

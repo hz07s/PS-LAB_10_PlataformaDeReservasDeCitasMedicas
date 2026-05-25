@@ -20,7 +20,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Fecha</label>
-                        <input type="date" name="fecha" id="fecha" class="form-control" min="{{ min_date }}" required>
+                        <input type="date" name="fecha" id="fecha" class="form-control" min="{{ min_date }}" max="{{ max_date }}" required>
                         <div id="date-warning" class="text-danger small mt-1"></div>
                     </div>
                     <div class="mb-3">
@@ -117,6 +117,7 @@
     const availabilityGrid = document.getElementById("availability-grid");
     const dateWarning = document.getElementById("date-warning");
     const minDate = "{{ min_date }}";
+    const maxDate = "{{ max_date }}";
 
     function resetAvailability(message) {
         availabilityGrid.innerHTML = `<div class="availability-empty text-muted">${message}</div>`;
@@ -135,6 +136,12 @@
         return selected < min;
     }
 
+    function isAfterMax(dateString) {
+        const selected = new Date(dateString + "T00:00:00");
+        const max = new Date(maxDate + "T00:00:00");
+        return selected > max;
+    }
+
     function validateDateInput() {
         const value = dateInput.value;
         if (!value) {
@@ -143,6 +150,10 @@
         }
         if (isBeforeMin(value)) {
             dateWarning.textContent = "La fecha debe ser al menos un día después de hoy.";
+            return false;
+        }
+        if (isAfterMax(value)) {
+            dateWarning.textContent = "La cita no puede exceder los 120 dias.";
             return false;
         }
         if (isWeekend(value)) {

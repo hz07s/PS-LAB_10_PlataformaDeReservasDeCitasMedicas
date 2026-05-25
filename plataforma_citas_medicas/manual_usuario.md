@@ -75,6 +75,7 @@ Finaliza la sesion y vuelve al login.
 **Restricciones clave:**
 - Solo fechas habiles (lunes a viernes).
 - La fecha debe ser al menos un dia despues de hoy.
+- La cita no puede exceder los 120 dias a partir de hoy.
 - Horas validas dentro del horario del medico (inicio inclusive, fin exclusivo).
 - No se permite doble reserva para el mismo medico, fecha y hora.
 

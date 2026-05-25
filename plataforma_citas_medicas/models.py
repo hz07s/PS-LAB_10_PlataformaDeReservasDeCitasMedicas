@@ -21,6 +21,14 @@ class User(db.Model):
 
     citas = db.relationship("Cita", backref="usuario", lazy=True)
 
+    def __init__(self, nombre, email, edad, telefono, password_hash, **kwargs):
+        kwargs["nombre"] = nombre
+        kwargs["email"] = email
+        kwargs["edad"] = edad
+        kwargs["telefono"] = telefono
+        kwargs["password_hash"] = password_hash
+        super().__init__(**kwargs)
+
 
 class Medico(db.Model):
     """Modelo de medico con horario fijo y duracion de citas."""
@@ -35,6 +43,14 @@ class Medico(db.Model):
     duracion_min = db.Column(db.Integer, nullable=False, default=30)
 
     citas = db.relationship("Cita", backref="medico", lazy=True)
+
+    def __init__(self, nombre, especialidad, hora_inicio, hora_fin, duracion_min=30, **kwargs):
+        kwargs["nombre"] = nombre
+        kwargs["especialidad"] = especialidad
+        kwargs["hora_inicio"] = hora_inicio
+        kwargs["hora_fin"] = hora_fin
+        kwargs["duracion_min"] = duracion_min
+        super().__init__(**kwargs)
 
 
 class Cita(db.Model):
@@ -55,3 +71,11 @@ class Cita(db.Model):
             "medico_id", "fecha", "hora", name="uq_cita_medico_fecha_hora"
         ),
     )
+
+    def __init__(self, usuario_id, medico_id, fecha, hora, estado="programada", **kwargs):
+        kwargs["usuario_id"] = usuario_id
+        kwargs["medico_id"] = medico_id
+        kwargs["fecha"] = fecha
+        kwargs["hora"] = hora
+        kwargs["estado"] = estado
+        super().__init__(**kwargs)

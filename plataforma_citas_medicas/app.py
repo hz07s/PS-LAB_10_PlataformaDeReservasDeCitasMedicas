@@ -229,12 +229,14 @@ def create_app(test_config: dict | None = None) -> Flask:
             )
 
         min_date = (date_type.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+        max_date = (date_type.today() + timedelta(days=120)).strftime("%Y-%m-%d")
 
         return render_template(
             "dashboard.html",
             doctors=doctors,
             citas=citas_view,
             min_date=min_date,
+            max_date=max_date,
             user_name=session.get("user_name", ""),
         )
 
